@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArtSpire - Where Ideas Come Alive</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+    <style>
+        /* CSS Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #6a11cb;
+            --secondary: #2575fc;
+            --accent: #ff4e8d;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Three.js Canvas */
+        #three-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            background: rgba(33, 37, 41, 0.8);
+            backdrop-filter: blur(10px);
+            transition: var(--transition);
+        }
+
+        .navbar.scrolled {
+            padding: 1rem 2rem;
+            background: rgba(33, 37, 41, 0.95);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: var(--light);
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            padding: 0.5rem 0;
+            transition: var(--transition);
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            transition: var(--transition);
+            transform: translateX(-50%);
+        }
+
+        .nav-link:hover {
+            color: var(--accent);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Sections */
+        section {
+            min-height: 100vh;
+            padding: 6rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        /* Landing Section */
+        #landing {
+            text-align: center;
+            padding-top: 10rem;
+        }
+
+        .title {
+            font-size: 4.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            letter-spacing: 2px;
+        }
+
+        .title span {
+            display: inline-block;
+            opacity: 0;
+        }
+
+        .subtitle {
+            font-size: 1.8rem;
+            margin-bottom: 3rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .cta-button {
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 10px 20px rgba(106, 17, 203, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(106, 17, 203, 0.5);
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .cta-button:hover::before {
+            left: 100%;
+        }
+
+        /* Gallery Section */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .art-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: var(--transition);
+            transform: scale(0.9);
+            opacity: 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .art-card.visible {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .art-card:hover {
+            transform: translateY(-10px) rotateY(5deg);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .art-image {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .art-info {
+            padding: 1.5rem;
+        }
+
+        .artist-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .art-tag {
+            display: inline-block;
+            padding: 0.3rem 1rem;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: rgba(33, 37, 41, 0.9);
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            padding: 2rem;
+            position: relative;
+            transform: scale(0.8);
+            transition: var(--transition);
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 2rem;
+            color: var(--light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: var(--accent);
+        }
+
+        .modal-image {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .modal-caption {
+            font-size: 1.2rem;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: var(--transition);
+        }
+
+        .modal.active .modal-caption {
+            opacity: 1;
+            transform: translateY(0);
+            transition-delay: 0.3s;
+        }
+
+        /* Inspiration Generator */
+        #inspiration {
+            text-align: center;
+        }
+
+        .generator-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .generate-button {
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 10px 20px rgba(106, 17, 203, 0.3);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0 auto 2rem;
+        }
+
+        .generate-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(106, 17, 203, 0.5);
+        }
+
+        .prompt-display {
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-style: italic;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .save-button {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            background: transparent;
+            border: 2px solid var(--accent);
+            border-radius: 50px;
+            color: var(--accent);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .save-button:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .saved-prompts {
+            margin-top: 3rem;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .saved-prompt {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            text-align: left;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .saved-prompt.visible {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* Portfolio Showcase */
+        .carousel {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .carousel-track {
+            display: flex;
+            transition: transform 0.5s ease;
+            gap: 2rem;
+        }
+
+        .carousel-slide {
+            min-width: 350px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .slide-image {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .slide-content {
+            padding: 1.5rem;
+        }
+
+        .slide-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .slide-bio {
+            margin-bottom: 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .view-profile {
+            padding: 0.7rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .view-profile:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(106, 17, 203, 0.3);
+        }
+
+        .carousel-nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .carousel-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .carousel-dot.active {
+            background: var(--accent);
+            transform: scale(1.2);
+        }
+
+        /* Artist Spotlight */
+        .spotlight-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            height: 400px;
+            overflow: hidden;
+        }
+
+        .spotlight-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: var(--transition);
+        }
+
+        .spotlight-slide.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .artist-image {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 3rem;
+            flex-shrink: 0;
+        }
+
+        .artist-info {
+            flex: 1;
+            padding: 0 2rem;
+        }
+
+        .artist-name {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .artist-quote {
+            font-size: 1.3rem;
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .signature {
+            width: 200px;
+            height: 50px;
+            margin-top: 1rem;
+        }
+
+        .signature path {
+            stroke: var(--accent);
+            stroke-width: 2;
+            fill: none;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+        }
+
+        .spotlight-slide.active .signature path {
+            animation: drawSignature 2s ease forwards;
+        }
+
+        @keyframes drawSignature {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* About Section */
+        .about-content {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .mission-text {
+            font-size: 1.8rem;
+            margin-bottom: 3rem;
+            line-height: 1.8;
+        }
+
+        .mission-text span {
+            display: inline-block;
+            opacity: 0;
+        }
+
+        .tools-container {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .tool {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            transition: var(--transition);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .tool:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .tool:nth-child(3) {
+            animation-delay: 1s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        /* Footer */
+        footer {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            padding: 4rem 2rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wave {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z' fill='%23212529'%3E%3C/path%3E%3C/svg%3E");
+            background-size: 1200px 100px;
+            animation: wave 12s linear infinite;
+        }
+
+        @keyframes wave {
+            0% {
+                background-position-x: 0;
+            }
+            100% {
+                background-position-x: 1200px;
+            }
+        }
+
+        .footer-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .footer-link {
+            color: var(--light);
+            text-decoration: none;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .footer-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--light);
+            transition: var(--transition);
+        }
+
+        .footer-link:hover {
+            color: var(--accent);
+        }
+
+        .footer-link:hover::after {
+            width: 100%;
+        }
+
+        .footer-quote {
+            font-size: 1.5rem;
+            font-style: italic;
+            margin-top: 2rem;
+            min-height: 60px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .title {
+                font-size: 3.5rem;
+            }
+            
+            .section-title {
+                font-size: 2.5rem;
+            }
+            
+            .spotlight-container {
+                height: auto;
+            }
+            
+            .spotlight-slide {
+                flex-direction: column;
+                text-align: center;
+                padding: 1.5rem;
+            }
+            
+            .artist-info {
+                padding: 1rem 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+            }
+            
+            .nav-links {
+                gap: 1rem;
+            }
+            
+            .title {
+                font-size: 2.8rem;
+            }
+            
+            .subtitle {
+                font-size: 1.4rem;
+            }
+            
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+            
+            .carousel-slide {
+                min-width: 300px;
+            }
+            
+            .tools-container {
+                gap: 1.5rem;
+            }
+            
+            .tool {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            section {
+                padding: 4rem 1rem;
+            }
+            
+            .title {
+                font-size: 2.2rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .carousel-slide {
+                min-width: 280px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Three.js Background Canvas -->
+    <div id="three-canvas"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="logo">ArtSpire</div>
+        <div class="nav-links">
+            <a href="#landing" class="nav-link">Home</a>
+            <a href="#gallery" class="nav-link">Gallery</a>
+            <a href="#inspiration" class="nav-link">Inspire Me</a>
+            <a href="#showcase" class="nav-link">Showcase</a>
+            <a href="#about" class="nav-link">About</a>
+        </div>
+    </nav>
+
+    <!-- Landing Section -->
+    <section id="landing">
+        <h1 class="title" id="animated-title">ArtSpire — Where Ideas Come Alive.</h1>
+        <p class="subtitle" id="typed-subtitle"></p>
+        <button class="cta-button" id="explore-button">Start Exploring</button>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery">
+        <h2 class="section-title">Inspiration Gallery</h2>
+        <div class="gallery-grid" id="gallery-grid">
+            <!-- Art cards will be generated by JavaScript -->
+        </div>
+    </section>
+
+    <!-- Inspiration Generator -->
+    <section id="inspiration">
+        <h2 class="section-title">AI Art Prompt Generator</h2>
+        <div class="generator-container">
+            <button class="generate-button" id="generate-button">
+                <span>Generate Inspiration</span>
+                <span>✨</span>
+            </button>
+            <div class="prompt-display" id="prompt-display">
+                Click the button to generate an inspiring art prompt!
+            </div>
+            <button class="save-button" id="save-button">Save Prompt</button>
+        </div>
+        <div class="saved-prompts" id="saved-prompts">
+            <!-- Saved prompts will appear here -->
+        </div>
+    </section>
+
+    <!-- Portfolio Showcase -->
+    <section id="showcase">
+        <h2 class="section-title">Portfolio Showcase</h2>
+        <div class="carousel">
+            <div class="carousel-track" id="carousel-track">
+                <!-- Carousel slides will be generated by JavaScript -->
+            </div>
+            <div class="carousel-nav" id="carousel-nav">
+                <!-- Navigation dots will be generated by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Artist Spotlight -->
+    <section id="spotlight">
+        <h2 class="section-title">Artist Spotlight</h2>
+        <div class="spotlight-container" id="spotlight-container">
+            <!-- Spotlight slides will be generated by JavaScript -->
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about">
+        <h2 class="section-title">About ArtSpire</h2>
+        <div class="about-content">
+            <p class="mission-text" id="mission-text">ArtSpire connects creativity with motion, turning pixels into poetry.</p>
+            <div class="tools-container">
+                <div class="tool">🎨</div>
+                <div class="tool">📷</div>
+                <div class="tool">✏️</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="wave"></div>
+        <div class="footer-content">
+            <div class="logo">ArtSpire</div>
+            <div class="footer-links">
+                <a href="#" class="footer-link">Privacy Policy</a>
+                <a href="#" class="footer-link">Terms of Service</a>
+                <a href="#" class="footer-link">Contact Us</a>
+                <a href="#" class="footer-link">Support</a>
+            </div>
+            <div class="footer-quote" id="footer-quote"></div>
+            <p>&copy; 2023 ArtSpire. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Modal -->
+    <div class="modal" id="art-modal">
+        <div class="modal-content">
+            <span class="modal-close" id="modal-close">&times;</span>
+            <div class="modal-image" id="modal-image"></div>
+            <p class="modal-caption" id="modal-caption"></p>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Three.js background
+        function initThreeJS() {
+            const canvas = document.getElementById('three-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            
+            // Create particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 1000;
+            
+            const posArray = new Float32Array(particlesCount * 3);
+            const colorArray = new Float32Array(particlesCount * 3);
+            
+            for (let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 10;
+                colorArray[i] = Math.random();
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.02,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+            
+            camera.position.z = 2;
+            
+            // Animation
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                particlesMesh.rotation.x += 0.001;
+                particlesMesh.rotation.y += 0.002;
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // Initialize GSAP animations
+        function initAnimations() {
+            // Register ScrollTrigger plugin
+            gsap.registerPlugin(ScrollTrigger);
+            
+            // Navbar scroll effect
+            window.addEventListener('scroll', () => {
+                const navbar = document.querySelector('.navbar');
+                if (window.scrollY > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            });
+            
+            // Landing page animations
+            const title = document.getElementById('animated-title');
+            const titleText = title.textContent;
+            title.innerHTML = '';
+            
+            for (let i = 0; i < titleText.length; i++) {
+                const span = document.createElement('span');
+                span.textContent = titleText[i];
+                title.appendChild(span);
+                
+                gsap.to(span, {
+                    opacity: 1,
+                    duration: 0.05,
+                    delay: i * 0.05,
+                    ease: 'power2.out'
+                });
+            }
+            
+            // Typewriter effect for subtitle
+            const typed = new Typed('#typed-subtitle', {
+                strings: ['Explore. Create. Inspire.'],
+                typeSpeed: 50,
+                backSpeed: 30,
+                backDelay: 2000,
+                startDelay: 1000,
+                loop: true
+            });
+            
+            // Pulse animation for CTA button
+            gsap.to('#explore-button', {
+                scale: 1.05,
+                duration: 1,
+                repeat: -1,
+                yoyo: true,
+                ease: 'power1.inOut'
+            });
+            
+            // Explore button click handler
+            document.getElementById('explore-button').addEventListener('click', () => {
+                gsap.to(window, {
+                    duration: 1,
+                    scrollTo: '#gallery',
+                    ease: 'power2.inOut'
+                });
+            });
+            
+            // Gallery card animations
+            const artCards = document.querySelectorAll('.art-card');
+            gsap.utils.toArray('.art-card').forEach((card, i) => {
+                gsap.fromTo(card, {
+                    opacity: 0,
+                    y: 50,
+                    scale: 0.9
+                }, {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    duration: 0.8,
+                    delay: i * 0.1,
+                    scrollTrigger: {
+                        trigger: card,
+                        start: 'top 80%',
+                        toggleActions: 'play none none reverse'
+                    }
+                });
+            });
+            
+            // Mission text animation
+            const missionText = document.getElementById('mission-text');
+            const missionTextContent = missionText.textContent;
+            missionText.innerHTML = '';
+            
+            const words = missionTextContent.split(' ');
+            words.forEach(word => {
+                const wordSpan = document.createElement('span');
+                wordSpan.textContent = word + ' ';
+                missionText.appendChild(wordSpan);
+            });
+            
+            const wordSpans = missionText.querySelectorAll('span');
+            gsap.fromTo(wordSpans, {
+                opacity: 0,
+                y: 20
+            }, {
+                opacity: 1,
+                y: 0,
+                duration: 0.5,
+                stagger: 0.1,
+                scrollTrigger: {
+                    trigger: missionText,
+                    start: 'top 80%',
+                    toggleActions: 'play none none reverse'
+                }
+            });
+            
+            // Footer quote typewriter
+            const footerTyped = new Typed('#footer-quote', {
+                strings: ['"Every artist was first an amateur." — Emerson.'],
+                typeSpeed: 40,
+                startDelay: 1000
+            });
+        }
+
+        // Generate gallery content
+        function generateGallery() {
+            const galleryGrid = document.getElementById('gallery-grid');
+            const artData = [
+                { id: 1, title: 'Dreamscape', artist: 'Alex Morgan', tag: 'Surrealism' },
+                { id: 2, title: 'Urban Pulse', artist: 'Sam Rivera', tag: 'Digital' },
+                { id: 3, title: 'Ethereal Forms', artist: 'Jordan Lee', tag: 'Abstract' },
+                { id: 4, title: 'Chromatica', artist: 'Taylor Kim', tag: 'Minimalist' },
+                { id: 5, title: 'Neon Dreams', artist: 'Casey Smith', tag: 'Digital' },
+                { id: 6, title: 'Organic Structures', artist: 'Riley Jones', tag: 'Abstract' }
+            ];
+            
+            artData.forEach(art => {
+                const card = document.createElement('div');
+                card.className = 'art-card';
+                card.innerHTML = `
+                    <div class="art-image">${art.title}</div>
+                    <div class="art-info">
+                        <h3 class="artist-name">${art.artist}</h3>
+                        <span class="art-tag">${art.tag}</span>
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => openModal(art));
+                galleryGrid.appendChild(card);
+            });
+        }
+
+        // Modal functionality
+        function openModal(art) {
+            const modal = document.getElementById('art-modal');
+            const modalImage = document.getElementById('modal-image');
+            const modalCaption = document.getElementById('modal-caption');
+            
+            modalImage.textContent = art.title;
+            modalCaption.textContent = `Created by ${art.artist}, inspired by ${art.tag}.`;
+            
+            modal.classList.add('active');
+            
+            // Close modal when clicking the X or outside the content
+            document.getElementById('modal-close').addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('art-modal');
+            modal.classList.remove('active');
+        }
+
+        // Art prompt generator
+        function initPromptGenerator() {
+            const prompts = [
+                "Paint the sound of rain inside a dream.",
+                "Create a portrait of time standing still.",
+                "Illustrate the feeling of nostalgia in abstract forms.",
+                "Design a cityscape where buildings are made of light.",
+                "Draw the moment when day turns to night.",
+                "Capture the essence of silence in vibrant colors.",
+                "Sculpt the shape of a forgotten memory.",
+                "Weave a tapestry from threads of moonlight.",
+                "Compose a symphony of geometric patterns.",
+                "Sketch the dance of shadows at twilight."
+            ];
+            
+            const generateButton = document.getElementById('generate-button');
+            const promptDisplay = document.getElementById('prompt-display');
+            const saveButton = document.getElementById('save-button');
+            const savedPromptsContainer = document.getElementById('saved-prompts');
+            
+            let currentPrompt = '';
+            let savedPrompts = [];
+            
+            generateButton.addEventListener('click', () => {
+                // Select a random prompt
+                const randomIndex = Math.floor(Math.random() * prompts.length);
+                currentPrompt = prompts[randomIndex];
+                
+                // Clear previous content
+                promptDisplay.innerHTML = '';
+                
+                // Create typewriter effect
+                const typed = new Typed(promptDisplay, {
+                    strings: [currentPrompt],
+                    typeSpeed: 30,
+                    showCursor: false,
+                    onComplete: () => {
+                        // Add particle effect
+                        createParticles(promptDisplay);
+                    }
+                });
+            });
+            
+            saveButton.addEventListener('click', () => {
+                if (currentPrompt && !savedPrompts.includes(currentPrompt)) {
+                    savedPrompts.push(currentPrompt);
+                    
+                    const savedPromptElement = document.createElement('div');
+                    savedPromptElement.className = 'saved-prompt';
+                    savedPromptElement.textContent = currentPrompt;
+                    
+                    savedPromptsContainer.appendChild(savedPromptElement);
+                    
+                    // Animate the new saved prompt
+                    gsap.fromTo(savedPromptElement, {
+                        scale: 0.9,
+                        opacity: 0
+                    }, {
+                        scale: 1,
+                        opacity: 1,
+                        duration: 0.5,
+                        ease: 'back.out(1.7)'
+                    });
+                }
+            });
+            
+            // Create particle effect
+            function createParticles(container) {
+                for (let i = 0; i < 20; i++) {
+                    const particle = document.createElement('div');
+                    particle.style.position = 'absolute';
+                    particle.style.width = '4px';
+                    particle.style.height = '4px';
+                    particle.style.backgroundColor = '#ff4e8d';
+                    particle.style.borderRadius = '50%';
+                    particle.style.left = '50%';
+                    particle.style.top = '50%';
+                    container.appendChild(particle);
+                    
+                    gsap.to(particle, {
+                        x: (Math.random() - 0.5) * 200,
+                        y: (Math.random() - 0.5) * 100,
+                        opacity: 0,
+                        duration: 1,
+                        onComplete: () => {
+                            container.removeChild(particle);
+                        }
+                    });
+                }
+            }
+        }
+
+        // Portfolio showcase carousel
+        function initCarousel() {
+            const carouselTrack = document.getElementById('carousel-track');
+            const carouselNav = document.getElementById('carousel-nav');
+            
+            const artists = [
+                { 
+                    name: 'Maya Chen', 
+                    bio: 'Digital artist specializing in surreal landscapes and dreamlike imagery.',
+                    work: 'Ethereal Dreams'
+                },
+                { 
+                    name: 'Leo Martinez', 
+                    bio: 'Mixed media artist exploring the intersection of technology and traditional art forms.',
+                    work: 'Digital Fusion'
+                },
+                { 
+                    name: 'Sofia Rodriguez', 
+                    bio: 'Portrait painter capturing the essence of human emotion through bold colors.',
+                    work: 'Emotional Portraits'
+                },
+                { 
+                    name: 'Alex Kim', 
+                    bio: 'Minimalist artist creating powerful statements with simple forms and clean lines.',
+                    work: 'Minimal Expressions'
+                }
+            ];
+            
+            let currentSlide = 0;
+            
+            // Create slides
+            artists.forEach((artist, index) => {
+                const slide = document.createElement('div');
+                slide.className = 'carousel-slide';
+                slide.innerHTML = `
+                    <div class="slide-image">${artist.work}</div>
+                    <div class="slide-content">
+                        <h3 class="slide-name">${artist.name}</h3>
+                        <p class="slide-bio">${artist.bio}</p>
+                        <button class="view-profile" data-index="${index}">View Profile</button>
+                    </div>
+                `;
+                carouselTrack.appendChild(slide);
+                
+                // Create navigation dots
+                const dot = document.createElement('div');
+                dot.className = `carousel-dot ${index === 0 ? 'active' : ''}`;
+                dot.dataset.index = index;
+                carouselNav.appendChild(dot);
+                
+                dot.addEventListener('click', () => {
+                    goToSlide(index);
+                });
+            });
+            
+            // Set initial position
+            updateCarousel();
+            
+            // Auto-advance carousel
+            setInterval(() => {
+                currentSlide = (currentSlide + 1) % artists.length;
+                updateCarousel();
+            }, 5000);
+            
+            function goToSlide(index) {
+                currentSlide = index;
+                updateCarousel();
+            }
+            
+            function updateCarousel() {
+                const slideWidth = document.querySelector('.carousel-slide').offsetWidth + 32; // including gap
+                carouselTrack.style.transform = `translateX(-${currentSlide * slideWidth}px)`;
+                
+                // Update active dot
+                document.querySelectorAll('.carousel-dot').forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentSlide);
+                });
+            }
+            
+            // View profile buttons
+            document.querySelectorAll('.view-profile').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    const artist = artists[index];
+                    
+                    // Create a modal-like effect with GSAP
+                    const overlay = document.createElement('div');
+                    overlay.style.position = 'fixed';
+                    overlay.style.top = '0';
+                    overlay.style.left = '0';
+                    overlay.style.width = '100%';
+                    overlay.style.height = '100%';
+                    overlay.style.backgroundColor = 'rgba(0,0,0,0.8)';
+                    overlay.style.zIndex = '2000';
+                    overlay.style.display = 'flex';
+                    overlay.style.justifyContent = 'center';
+                    overlay.style.alignItems = 'center';
+                    
+                    const profileCard = document.createElement('div');
+                    profileCard.style.background = 'linear-gradient(45deg, #6a11cb, #2575fc)';
+                    profileCard.style.padding = '2rem';
+                    profileCard.style.borderRadius = '15px';
+                    profileCard.style.color = 'white';
+                    profileCard.style.textAlign = 'center';
+                    profileCard.style.maxWidth = '400px';
+                    profileCard.style.width = '90%';
+                    
+                    profileCard.innerHTML = `
+                        <h3>${artist.name}</h3>
+                        <p>${artist.bio}</p>
+                        <p>Featured Work: <strong>${artist.work}</strong></p>
+                        <button class="close-profile" style="margin-top: 1rem; padding: 0.5rem 1rem; background: white; color: #6a11cb; border: none; border-radius: 5px; cursor: pointer;">Close</button>
+                    `;
+                    
+                    overlay.appendChild(profileCard);
+                    document.body.appendChild(overlay);
+                    
+                    // Add motion blur effect with GSAP
+                    gsap.fromTo(overlay, 
+                        { backdropFilter: 'blur(0px)', opacity: 0 },
+                        { backdropFilter: 'blur(10px)', opacity: 1, duration: 0.5 }
+                    );
+                    
+                    gsap.fromTo(profileCard, 
+                        { scale: 0.8, opacity: 0 },
+                        { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.7)' }
+                    );
+                    
+                    // Close button
+                    profileCard.querySelector('.close-profile').addEventListener('click', () => {
+                        gsap.to(overlay, {
+                            opacity: 0,
+                            duration: 0.3,
+                            onComplete: () => {
+                                document.body.removeChild(overlay);
+                            }
+                        });
+                    });
+                });
+            });
+        }
+
+        // Artist spotlight
+        function initSpotlight() {
+            const spotlightContainer = document.getElementById('spotlight-container');
+            
+            const artists = [
+                {
+                    name: 'Elena Vasquez',
+                    quote: 'Art is not what you see, but what you make others see.',
+                    initial: 'E',
+                    signature: 'M350,100 C350,150 300,200 250,200 C200,200 150,150 150,100'
+                },
+                {
+                    name: 'Marcus Thorne',
+                    quote: 'Creativity takes courage and a willingness to make mistakes.',
+                    initial: 'M',
+                    signature: 'M100,150 C150,100 200,100 250,150 C300,200 350,200 400,150'
+                },
+                {
+                    name: 'Isabelle Reed',
+                    quote: 'Every artist dips their brush in their own soul.',
+                    initial: 'I',
+                    signature: 'M200,100 L200,200 M150,150 L250,150'
+                }
+            ];
+            
+            let currentArtist = 0;
+            
+            // Create slides
+            artists.forEach((artist, index) => {
+                const slide = document.createElement('div');
+                slide.className = `spotlight-slide ${index === 0 ? 'active' : ''}`;
+                slide.innerHTML = `
+                    <div class="artist-image">${artist.initial}</div>
+                    <div class="artist-info">
+                        <h3 class="artist-name">${artist.name}</h3>
+                        <p class="artist-quote">${artist.quote}</p>
+                        <svg class="signature" viewBox="0 0 500 250">
+                            <path d="${artist.signature}"></path>
+                        </svg>
+                    </div>
+                `;
+                spotlightContainer.appendChild(slide);
+            });
+            
+            // Auto-rotate artists
+            setInterval(() => {
+                const slides = document.querySelectorAll('.spotlight-slide');
+                slides[currentArtist].classList.remove('active');
+                
+                currentArtist = (currentArtist + 1) % artists.length;
+                
+                slides[currentArtist].classList.add('active');
+            }, 6000);
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initThreeJS();
+            generateGallery();
+            initPromptGenerator();
+            initCarousel();
+            initSpotlight();
+            initAnimations();
+        });
+    </script>
+</body>
+</html>
